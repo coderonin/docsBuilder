@@ -1,0 +1,22 @@
+{
+  "name": "docsbuilder",
+  "version": "1.0.0",
+  "description": "Utility to create documentation from comments in files",
+  "main": "index.js",
+  "scripts": {
+    "test": "gulp --color"
+  },
+  "keywords": [
+    "documentation"
+  ],
+  "author": "coderonin",
+  "license": "MIT",
+  "dependencies": {
+    "colors": "^1.1.2",
+    "glob": "^7.0.3",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1"
+  }
+}
