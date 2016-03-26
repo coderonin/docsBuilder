@@ -2,21 +2,21 @@ var glob = require("glob"),
 	path = require('path'),
 	colors = require('colors');
 
-function docsBuilder(pattern, options, cb){
+function docsBuilder(pattern, options){
 	var files = [];
 
 	console.log("========================================================".green);
-	console.log("    Comienza lectura de archivos...");
+	console.log("    Begin files reading...");
 	console.log("========================================================".green);
 
 	glob.sync(pattern).forEach( function( file ) {
 		var fileName = path.resolve(file);
-		console.log(" -- leyendo: ".green + path.resolve(file));
-		files.push(path.resolve(file));
+		console.log(" -- Reading: ".green + fileName);
+		files.push(fileName);
 	});
 
 	console.log("========================================================".green);
-	console.log("    Lectura completada...");
+	console.log("    Reading Complete...");
 	console.log("========================================================".green);
 }
 
