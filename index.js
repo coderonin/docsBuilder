@@ -6,7 +6,8 @@ var glob = require("glob"),
 	//Variables
 
 	blockRegx = /\/\*\*(.|[\n\r])*?\*\//g,
-	lineRegx = /\*[^\/\*]*\b/g;
+	lineRegx = /\*[^\/\*]*\b/g,
+	docType = /\*\s*@\S*/g;
 
 function parseContent(fileName){
 	var data = fs.readFileSync(fileName, 'utf8'),
@@ -15,8 +16,46 @@ function parseContent(fileName){
 }
 
 function readDocumentationMetadata(block){
-	var lines = block.match(lineRegx);
-	return lines;
+	var metadata = { description: "", params : []},
+		lines = block.match(lineRegx);
+	lines.forEach(function(ln){
+		var type = docType.exec(ln.trim());
+		if(type){
+			var attr = type[0].replace(/\* @/g,""),
+				args = ln.replace(type,"").trim().split(" ");
+			switch(attr){
+				case "class":
+				case "member":
+				case "method":
+					metadata[attr] = args[0];
+					break;
+				case "private":
+					metadata.private = true;
+					break;
+				case "param":
+					metadata.params.push({
+						type: args[0],
+						name: args[1],
+						description : args.slice(2).join(" ")
+					});
+					break;
+				case "returns":
+					metadata.returns = {
+						type: args[0],
+						description : args.slice(1).join(" ")
+					};
+					break;
+				default:
+					console.log(attr.red);
+					console.log(args.red);
+					break;
+			}
+		}else{
+			console.log(ln.red);
+			metadata.description += ln.replace(/\* /g, "") + " ";
+		}
+	});
+	return metadata;
 }
 
 function docsBuilder(pattern, options){
@@ -40,9 +79,7 @@ function docsBuilder(pattern, options){
 
 	blocks.forEach(function(block){
 		var meta = readDocumentationMetadata(block);
-		meta.forEach(function(line){
-			console.log(line);
-		});
+		console.log(meta);
 	});
 
 	console.log("========================================================".green);
