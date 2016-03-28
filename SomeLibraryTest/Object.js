@@ -21,7 +21,7 @@ SomeLibrary.define("SomeLibrary.Object", function () {
      * Fires an event
      * @param {string} event The event name to be fired
      * @param {params} params The parameters to be sent to the event handler
-     * @returns {bool} result True of false
+     * @return {bool} result True of false
      */
     function fireEvent() {  }
 

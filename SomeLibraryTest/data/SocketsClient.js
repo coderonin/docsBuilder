@@ -20,7 +20,7 @@ SomeLibrary.define('SomeLibrary.data.SocketsClient', function () {
      * @param {object} options An object that contains the request options. It might containg the following:
      * @param {string} options.url The request method on the socket
      * @param {function} options.callback The callback method when the response is received
-     * @returns {object} some value
+     * @return {object} some value
      */
     function Request(options) {  };
 
