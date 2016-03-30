@@ -1,16 +1,70 @@
 var glob = require("glob"),
 	fs = require('fs'),
+	fsSync = require('fs-sync'),
+	ncp = require('ncp').ncp,
+	rimraf = require('rimraf').sync,
 	path = require('path'),
 	colors = require('colors'),
 	jade = require('jade'),
+	namespaces = {},
+
 	//Variables
+
+	hasOwn = {}.hasOwnProperty,
+
+	cssPath 	= __dirname + "/web/css/",
+	jsPath 		= __dirname + "/web/js/",
+	fontsPath 	= __dirname + "/web/fonts/",
+	staging 	= __dirname + "/staging",
 
 	blockRegx = /\/\*\*(.|[\n\r])*?\*\//g,
 	lineRegx = /\*[^\/\*]*\b/g,
 	docType = /\*\s*@\S*/g;
 
-// Compile a function
-var templateFn = jade.compileFile(__dirname + "/web/index.jade", {});
+// Compile a tpl functions
+var indexTplFn = jade.compileFile(__dirname + "/web/index.jade", {});
+var mdTplFn = jade.compileFile(__dirname + "/web/document.jade", {});
+
+function forEach(list, f) {
+	for (var i = 0; i < list.length && !f(list[i], i++);) {
+		// empty
+	}
+}
+
+function forOwn(obj, f) {
+	for (var prop in obj) if (hasOwn.call(obj, prop)) {
+		if (f(obj[prop], prop)) break;
+	}
+}
+
+function setNs(name, data){
+	var ns = namespaces,
+		chunks = name.split("."),
+		l = chunks.length;
+
+	forEach(chunks,function(n, i){
+		ns[n] = (ns[n] || (i == l-1 ? data : {}));
+		ns = ns[n];
+	});
+}
+
+function parseMenuFromNS(ns){
+	var children = [];
+	forOwn(ns, function(val, key){
+		if(val.$class){
+			children.push({
+				label: key,
+				value: val.$class
+			});
+		}else{
+			children.push({
+				label: key,
+				children: parseMenuFromNS(val)
+			});
+		}
+	});
+	return children;
+}
 
 function parseContent(fileName){
 	var data = fs.readFileSync(fileName, 'utf8'),
@@ -30,7 +84,6 @@ function readDocumentationMetadata(block, fileName){
 			var attr = type[0].replace(/\*\s*@/g,""),
 				args = ln.replace(type,"").trim().split(" ");
 			switch(attr){
-				case "class":
 				case "member":
 				case "method":
 				case "extends":
@@ -39,7 +92,11 @@ function readDocumentationMetadata(block, fileName){
 				case "event":
 					metadata[attr] = args[0];
 					break;
+				case "class":
+					metadata.$class = args[0];
+					break;
 				case "private":
+				case "protected":
 				case "singleton":
 					metadata[attr] = true;
 					break;
@@ -73,8 +130,10 @@ function readDocumentationMetadata(block, fileName){
 function docsBuilder(pattern, options){
 	var files = [],
 		blocks = [],
-		docsData = {};
+		docsData = {},
+		autoComplete = [];
 
+	console.log("========================================================".green);
 	console.log("========================================================".green);
 	console.log("    Begin files reading...");
 	console.log("========================================================".green);
@@ -88,28 +147,52 @@ function docsBuilder(pattern, options){
 	console.log("========================================================".green);
 	console.log("    Building references...");
 	console.log("    Blocks: " + blocks.length);
-	console.log("========================================================".green);
 
 	blocks.forEach(function(block){
 		var meta = readDocumentationMetadata(block);
-		if(meta.class && !docsData[meta.class]){
-			docsData[meta.class] = meta;
-			docsData[meta.class].methods = [];
-			docsData[meta.class].events = [];
-			docsData[meta.class].properties = [];
-			docsData[meta.class].configs = [];
+		if(meta.$class && !docsData[meta.$class]){
+			docsData[meta.$class] = meta;
+			docsData[meta.$class].methods = [];
+			docsData[meta.$class].events = [];
+			docsData[meta.$class].properties = [];
+			docsData[meta.$class].configs = [];
+			autoComplete.push({
+				value: meta.$class,
+				type: "class",
+				key: meta.$class
+			});
 		}
 		if(meta.member && docsData[meta.member]){
-			if(meta.method) docsData[meta.member].methods.push(meta);
-			if(meta.event) docsData[meta.member].events.push(meta);
-			if(meta.property) docsData[meta.member].properties.push(meta);
-			if(meta.config) docsData[meta.member].configs.push(meta);
+			var row = {
+				value: meta.member,
+				isPrivate: meta.private,
+				isProtected: meta.protected
+			};
+			if(meta.method){
+				row.type = "method";
+				row.key = meta.method;
+				docsData[meta.member].methods.push(meta);
+			}
+			if(meta.event){
+				row.type = "event";
+				row.key = meta.event;
+				docsData[meta.member].events.push(meta);
+			}
+			if(meta.property){
+				row.type = "property";
+				row.key = meta.property;
+				docsData[meta.member].properties.push(meta);
+			}
+			if(meta.config){
+				row.type = "config";
+				row.key = meta.config;
+				docsData[meta.member].configs.push(meta);
+			}
+			autoComplete.push(row);
 		}
 	});
 
-	console.log("========================================================".green);
 	console.log("    Building references Complete...");
-	console.log("========================================================".green);
 	console.log("========================================================".green);
 	console.log("    Reading Complete...");
 	console.log("========================================================".green);
@@ -118,11 +201,38 @@ function docsBuilder(pattern, options){
 	console.log("    Writing Files...");
 	console.log("========================================================".green);
 
-	var index = templateFn({ data: JSON.stringify(docsData) });
-	fs.writeFileSync(__dirname +"/index.html", index);
+	if (fs.existsSync(staging)){
+		rimraf(staging);
+	}
+
+	fsSync.mkdir(staging);
+	fsSync.mkdir(staging + "/mds");
+
+	fsSync.copy(cssPath, staging + "/css");
+	console.log(' -- Writing'.green +' CSS: Done!');
+
+	fsSync.copy(jsPath, staging + "/js");
+	console.log(' -- Writing'.green +' JS: Done!');
+
+	fsSync.copy(fontsPath, staging + "/fonts");
+	console.log(' -- Writing'.green +' Fonts: Done!');
+
+	forOwn(docsData, function(data, cls){
+		setNs(cls, data);
+		var md = mdTplFn({ doc: data});
+		fs.writeFileSync(staging +"/mds/"+cls+".html", md);
+		console.log(' -- Writing Document For: '.green + cls);
+	});
+
+	var menuData = parseMenuFromNS(namespaces);
+
+	var index = indexTplFn({ data: JSON.stringify(menuData), autoComplete: JSON.stringify(autoComplete) });
+	fs.writeFileSync(staging +"/index.html", index);
+	console.log(' -- Writing'.green +' Index: Done!');
 
 	console.log("========================================================".green);
 	console.log("    Writing Complete...");
+	console.log("========================================================".green);
 	console.log("========================================================".green);
 }
 

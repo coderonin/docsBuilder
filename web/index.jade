@@ -2,7 +2,41 @@ doctype html
 html(lang="en")
   head
     title= pageTitle
+    link(href='css/bootstrap.min.css', type="text/css", rel="stylesheet")
+    link(href='css/style.css', type="text/css", rel="stylesheet")
     script(type='text/javascript').
       var docsData = !{data};
-      
+      var autoComplete = !{autoComplete};
       console.log(docsData);
+      console.log(autoComplete);
+  body(ng-controller="DocsNavigationController as dnav")
+    nav(class="navbar navbar-default navbar-fixed-top")
+      div(class="container-fluid")
+        div(class="navbar-header")
+          button(class="navbar-toggle", ng-click="menuOpen = !menuOpen")
+            span(class="sr-only") Toggle navigation
+            span(class="icon-bar")
+            span(class="icon-bar")
+            span(class="icon-bar")
+          a(class="navbar-brand", href="#") Brand
+        div(class="navbar-form navbar-right")
+            input(type="text", class="form-control", placeholder="Search", ng-model="selected", typeahead-template-url="searchTplItems.html", uib-typeahead="value as value.key for value in dnav.searchValues | filter:{ key:$viewValue} | limitTo:8")
+    div(class='container-fluid')
+      div(class="row")
+        div(id="sidebar-offcanvas", class="bordered", ng-class="{open: menuOpen}")
+        div(id="body-wrapper", class="bordered", ng-class="{open: menuOpen}")
+          div(class='container-fluid bordered')
+            <div ui-view></div>
+
+  script(type="text/ng-template", id="searchTplItems.html")
+    div(class="item")
+      div(class="icon icon-method")
+      div(class="meta")
+        span(ng-class="[{ private : match.model.isPrivate }, { protected : match.model.isProtected }]")
+      div(class="title", ng-bind-html="match.label | uibTypeaheadHighlight:query")
+      div(class="class", ng-bind-html="match.model.value")
+
+  script(type='text/javascript', src='js/angular.min.js')
+  script(type='text/javascript', src='js/angular-ui-router.min.js')
+  script(type='text/javascript', src='js/ui-bootstrap-tpls.min.js')
+  script(type='text/javascript', src='js/app.js')
