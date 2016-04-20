@@ -19,7 +19,7 @@ body {
 
 #sidebar-offcanvas,
 #body-wrapper{
-	padding-top: 50;
+	padding-top: 50px;
 	position: absolute;
 	top: 0;
 	height: 100%;
@@ -31,6 +31,7 @@ body {
     -moz-transition: width 0.3s ease;
     -o-transition: width 0.3s ease;
     transition: width 0.3s ease;
+    overflow: hidden;
 }
 
 #sidebar-offcanvas.open{
@@ -48,6 +49,44 @@ body {
 }
 #body-wrapper.open{
 	margin-left: 250px;
+}
+
+#treepanel-container{
+	position: absolute;
+    top: 50px;
+    bottom: 0px;
+    width: 250px;
+    overflow: auto;
+    padding: 5px;
+}
+
+
+.tree-node-ico.tree-node-expanded,
+.tree-node-ico.tree-node-collapsed{
+	width: 12px;
+	background-size: 8px
+}
+
+.node-name{
+	display: inline-block;
+}
+.node-name.selected:before{
+	content: "";
+    background: #BEEBFF;
+    display: block;
+    position: absolute;
+    right: 0;
+    left: 0;
+    height: 22px;
+    box-shadow: 0 0 1px #999 inset;
+    margin-top: -2px;
+    z-index: -1;
+}
+
+treenode .selected {
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 .bordered{

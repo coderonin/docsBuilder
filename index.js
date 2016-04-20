@@ -1,147 +1,99 @@
-var glob = require("glob"),
-	fs = require('fs'),
-	fsSync = require('fs-sync'),
-	ncp = require('ncp').ncp,
-	rimraf = require('rimraf').sync,
+var u = require(__dirname + "/src/utils.js"),
+	builder = require(__dirname + "/src/builder.js"),
+	jReader = require(__dirname + "/src/javaDocTypeReader.js"),
+
+	globby = require("globby"),
 	path = require('path'),
 	colors = require('colors'),
-	jade = require('jade'),
-	namespaces = {},
+
+	availableReaders = {
+		javaDoc : "javaDoc"
+	}
 
 	//Variables
 
-	hasOwn = {}.hasOwnProperty,
+	imgCloseFolder	=	"css/img/folder-closed.png",
+	imgOpenFolder	=	"css/img/folder-open.png",
+	singletonFile	=	"css/img/singleton.png",
+	interfaceFile	=	"css/img/file-interface.png";
 
-	cssPath 	= __dirname + "/web/css/",
-	jsPath 		= __dirname + "/web/js/",
-	fontsPath 	= __dirname + "/web/fonts/",
-	staging 	= __dirname + "/staging",
+function setNs(ns, name, data){
+	var chunks = name.split("."),
+		l = chunks.length,
+		lastNs = null;
 
-	blockRegx = /\/\*\*(.|[\n\r])*?\*\//g,
-	lineRegx = /\*[^\/\*]*\b/g,
-	docType = /\*\s*@\S*/g;
-
-// Compile a tpl functions
-var indexTplFn = jade.compileFile(__dirname + "/web/index.jade", {});
-var mdTplFn = jade.compileFile(__dirname + "/web/document.jade", {});
-
-function forEach(list, f) {
-	for (var i = 0; i < list.length && !f(list[i], i++);) {
-		// empty
-	}
-}
-
-function forOwn(obj, f) {
-	for (var prop in obj) if (hasOwn.call(obj, prop)) {
-		if (f(obj[prop], prop)) break;
-	}
-}
-
-function setNs(name, data){
-	var ns = namespaces,
-		chunks = name.split("."),
-		l = chunks.length;
-
-	forEach(chunks,function(n, i){
-		ns[n] = (ns[n] || (i == l-1 ? data : {}));
-		ns = ns[n];
+	u.forEach(chunks,function(n, i){
+		ns.nsnodes[n] = (ns.nsnodes[n] || (i == l-1 ? data : {nsnodes:{}}));
+		ns = ns.nsnodes[n];
+		lastNs = ns;
 	});
+
+	if(lastNs && lastNs.$class != data.$class){
+		u.assign(lastNs, data);
+	}
 }
 
-function parseMenuFromNS(ns){
-	var children = [];
-	forOwn(ns, function(val, key){
+function parseMenuFromNS(ns, id){
+	var children = [],
+		i = 1;
+
+	u.forOwn(ns.nsnodes || {}, function(val, key){
 		if(val.$class){
-			children.push({
-				label: key,
-				value: val.$class
-			});
+			var node = {
+				id: id + i,
+				name: key,
+				url: val.$class
+			};
+			if(val.singleton){
+				node.singleton = true;
+				node.image = singletonFile;
+				if(val.nsnodes){
+					node.expanded = false;
+					node.children = parseMenuFromNS(val, id + i);
+				}
+			}
+			if(val.interface){
+				node.image = interfaceFile;
+			}
+			children.push(node);
 		}else{
 			children.push({
-				label: key,
-				children: parseMenuFromNS(val)
+				id: id + i,
+				image: imgCloseFolder,
+				name: key,
+				expanded: false,
+				children: parseMenuFromNS(val, id + i)
 			});
 		}
+		i++;
 	});
 	return children;
-}
-
-function parseContent(fileName){
-	var data = fs.readFileSync(fileName, 'utf8'),
-		blocks = data.match(blockRegx);
-	return blocks || [];
-}
-
-function readDocumentationMetadata(block, fileName){
-	var metadata = { description: "" },
-		lines = block.match(lineRegx);
-
-	lines.forEach(function(ln){
-		docType.lastIndex = 0;
-		var type = docType.exec(ln.trim());
-		
-		if(type){
-			var attr = type[0].replace(/\*\s*@/g,""),
-				args = ln.replace(type,"").trim().split(" ");
-			switch(attr){
-				case "member":
-				case "method":
-				case "extends":
-				case "config":
-				case "property":
-				case "event":
-					metadata[attr] = args[0];
-					break;
-				case "class":
-					metadata.$class = args[0];
-					break;
-				case "private":
-				case "protected":
-				case "singleton":
-					metadata[attr] = true;
-					break;
-				case "param":
-					if(!metadata.params) metadata.params = [];
-					metadata.params.push({
-						type: args[0].replace(/({|})/g,""),
-						name: args[1],
-						description : args.slice(2).join(" ")
-					});
-					break;
-				case "return":
-					metadata.returns = {
-						type: args[0].replace(/({|})/g,""),
-						description : args.slice(1).join(" ")
-					};
-					break;
-				default:
-					console.log("-- WARNING line: ".yellow + ln);
-					console.log("   Attribute: ".yellow + attr);
-					console.log("   with arguments: ".yellow + args);
-					break;
-			}
-		}else{
-			metadata.description += ln.replace(/\* /g, "") + " ";
-		}
-	});
-	return metadata;
 }
 
 function docsBuilder(pattern, options){
 	var files = [],
 		blocks = [],
 		docsData = {},
-		autoComplete = [];
+		namespaces = {nsnodes:{}},
+		autoComplete = [],
+		docReader;
+
+	switch(options.readerType){
+		case availableReaders.javaDoc:
+		default:
+			docReader = jReader;
+			break;
+	}
 
 	console.log("========================================================".green);
 	console.log("========================================================".green);
 	console.log("    Begin files reading...");
 	console.log("========================================================".green);
 
-	glob.sync(pattern).forEach( function( file ) {
+	globby.sync(pattern, { cwd: options.cwd || process.cwd() }).forEach( function( file ) {
 		var fileName = path.resolve(file);
 		console.log(" -- Reading: ".green + fileName);
-		blocks = blocks.concat(parseContent(fileName));
+		blocks = blocks.concat(docReader.parseContent(fileName));
 	});
 
 	console.log("========================================================".green);
@@ -149,7 +101,7 @@ function docsBuilder(pattern, options){
 	console.log("    Blocks: " + blocks.length);
 
 	blocks.forEach(function(block){
-		var meta = readDocumentationMetadata(block);
+		var meta = docReader.readDocumentationMetadata(block);
 		if(meta.$class && !docsData[meta.$class]){
 			docsData[meta.$class] = meta;
 			docsData[meta.$class].methods = [];
@@ -192,6 +144,17 @@ function docsBuilder(pattern, options){
 		}
 	});
 
+	u.forOwn(docsData, function(data, cls){
+		setNs(namespaces, cls, data);
+	});
+
+	var menuData = parseMenuFromNS(namespaces, "docstree");
+
+	if(menuData.length){
+		menuData[0].expanded = true;
+		if(!menuData[0].singleton) menuData[0].image = imgOpenFolder;
+	}
+
 	console.log("    Building references Complete...");
 	console.log("========================================================".green);
 	console.log("    Reading Complete...");
@@ -201,39 +164,14 @@ function docsBuilder(pattern, options){
 	console.log("    Writing Files...");
 	console.log("========================================================".green);
 
-	if (fs.existsSync(staging)){
-		rimraf(staging);
-	}
-
-	fsSync.mkdir(staging);
-	fsSync.mkdir(staging + "/mds");
-
-	fsSync.copy(cssPath, staging + "/css");
-	console.log(' -- Writing'.green +' CSS: Done!');
-
-	fsSync.copy(jsPath, staging + "/js");
-	console.log(' -- Writing'.green +' JS: Done!');
-
-	fsSync.copy(fontsPath, staging + "/fonts");
-	console.log(' -- Writing'.green +' Fonts: Done!');
-
-	forOwn(docsData, function(data, cls){
-		setNs(cls, data);
-		var md = mdTplFn({ doc: data});
-		fs.writeFileSync(staging +"/mds/"+cls+".html", md);
-		console.log(' -- Writing Document For: '.green + cls);
-	});
-
-	var menuData = parseMenuFromNS(namespaces);
-
-	var index = indexTplFn({ data: JSON.stringify(menuData), autoComplete: JSON.stringify(autoComplete) });
-	fs.writeFileSync(staging +"/index.html", index);
-	console.log(' -- Writing'.green +' Index: Done!');
+	builder.write(docsData, menuData, autoComplete, options.dest);
 
 	console.log("========================================================".green);
 	console.log("    Writing Complete...");
 	console.log("========================================================".green);
 	console.log("========================================================".green);
 }
+
+docsBuilder.availableReaders = availableReaders;
 
 module.exports = docsBuilder;

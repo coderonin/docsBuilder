@@ -2,9 +2,16 @@
   "name": "docsbuilder",
   "version": "1.0.0",
   "description": "Utility to create documentation from comments in files",
-  "main": "index.js",
+  "bin": {
+    "docsbuilder": "./bin/docs.js"
+  },
   "scripts": {
-    "test": "gulp --color"
+    "test": "jasmine-node ./test/specs --color --verbose",
+    "start": "node ./bin/docs.js ./test/SomeLibraryTest/**/**.js \"./other/folder with space in the name/**/**.js\" --dest ./docs/ --color"
+  },
+  "respository": {
+    "type": "git",
+    "url": "https://github.com/coderonin/docsBuilder"
   },
   "keywords": [
     "documentation"
@@ -14,13 +21,14 @@
   "dependencies": {
     "colors": "^1.1.2",
     "fs-sync": "^1.0.2",
-    "glob": "^7.0.3",
+    "globby": "^4.0.0",
     "jade": "^1.11.0",
-    "ncp": "^2.0.0",
     "path": "^0.12.7",
-    "rimraf": "^2.5.2"
+    "rimraf": "^2.5.2",
+    "yargs": "^4.6.0"
   },
   "devDependencies": {
-    "gulp": "^3.9.1"
-  }
+    "jasmine-node": "^1.14.5"
+  },
+  "preferGlobal": true
 }

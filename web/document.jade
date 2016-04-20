@@ -1,3 +1,5 @@
+div(class='container-fluid', ng-controller="DocumentContentController as dcc", ng-init="dcc.initAutoComplete(!{doc})")
+
 div(class='super-container')
-  div= doc.class
+  div= doc.$class
   div= doc.description

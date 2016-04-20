@@ -3,17 +3,16 @@ html(lang="en")
   head
     title= pageTitle
     link(href='css/bootstrap.min.css', type="text/css", rel="stylesheet")
+    link(href='css/angular-tree-widget.min.css', type="text/css", rel="stylesheet")
     link(href='css/style.css', type="text/css", rel="stylesheet")
     script(type='text/javascript').
       var docsData = !{data};
       var autoComplete = !{autoComplete};
-      console.log(docsData);
-      console.log(autoComplete);
   body(ng-controller="DocsNavigationController as dnav")
     nav(class="navbar navbar-default navbar-fixed-top")
       div(class="container-fluid")
         div(class="navbar-header")
-          button(class="navbar-toggle", ng-click="menuOpen = !menuOpen")
+          button(class="navbar-toggle", ng-click="dnav.menuOpen = !dnav.menuOpen")
             span(class="sr-only") Toggle navigation
             span(class="icon-bar")
             span(class="icon-bar")
@@ -23,10 +22,18 @@ html(lang="en")
             input(type="text", class="form-control", placeholder="Search", ng-model="selected", typeahead-template-url="searchTplItems.html", uib-typeahead="value as value.key for value in dnav.searchValues | filter:{ key:$viewValue} | limitTo:8")
     div(class='container-fluid')
       div(class="row")
-        div(id="sidebar-offcanvas", class="bordered", ng-class="{open: menuOpen}")
-        div(id="body-wrapper", class="bordered", ng-class="{open: menuOpen}")
+        div(id="sidebar-offcanvas", class="bordered", ng-class="{open: dnav.menuOpen}")
+          div(id="treepanel-container")
+            tree(nodes='dnav.menuData', options='dnav.menuOptions')
+        div(id="body-wrapper", class="bordered", ng-class="{open: dnav.menuOpen}")
           div(class='container-fluid bordered')
-            <div ui-view></div>
+            ul(class="nav nav-tabs")
+              li(role="presentation", ng-click="dnav.selectTab(tab.id)", ng-class="{ active: $index == dnav.activeNavigationTabIndex }", ng-repeat="tab in dnav.doctabs")
+                a {{tab.title}}
+                  span(ng-hide="$index == 0",class="", ng-click="dnav.closeTab($event, tab.id)") x
+            div(class="tab-content")
+              div(role="tabpanel", class="tab-pane", ng-class="{ active: $index == dnav.activeNavigationTabIndex }", ng-repeat="tab in dnav.doctabs")
+                {{tab.contentUrl}}
 
   script(type="text/ng-template", id="searchTplItems.html")
     div(class="item")
@@ -39,4 +46,7 @@ html(lang="en")
   script(type='text/javascript', src='js/angular.min.js')
   script(type='text/javascript', src='js/angular-ui-router.min.js')
   script(type='text/javascript', src='js/ui-bootstrap-tpls.min.js')
+  script(type='text/javascript', src='js/angular-recursion.min.js')
+  script(type='text/javascript', src='js/angular-animate.min.js')
+  script(type='text/javascript', src='js/angular-tree-widget.min.js')
   script(type='text/javascript', src='js/app.js')
