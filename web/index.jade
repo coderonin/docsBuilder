@@ -32,9 +32,8 @@ html(lang="en")
                 a {{tab.title}}
                   span(ng-hide="$index == 0",class="", ng-click="dnav.closeTab($event, tab.id)") x
             div(class="tab-content")
-              div(role="tabpanel", class="tab-pane", ng-class="{ active: $index == dnav.activeNavigationTabIndex }", ng-repeat="tab in dnav.doctabs")
-                {{tab.contentUrl}}
-
+              div(role="tabpanel", class="tab-pane", ng-class="{ active: $index == dnav.activeNavigationTabIndex }", ng-repeat="tab in dnav.doctabs", ng-include src="tab.contentUrl")
+                
   script(type="text/ng-template", id="searchTplItems.html")
     div(class="item")
       div(class="icon icon-method")

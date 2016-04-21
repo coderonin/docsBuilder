@@ -38,6 +38,8 @@ function write(docsData, menuData, autoCompleteData, destFolder){
 	fsSync.copy(imgsPath, staging + "/css/img");
 	console.log(' -- Writing'.green +' Images: Done!');
 
+	fsSync.copy(__dirname + "/../web/home.html", staging +"/mds/home.html");
+	
 	u.forOwn(docsData, function(data, cls){
 		var md = mdTplFn({ doc: data});
 		fs.writeFileSync(staging +"/mds/"+cls+".html", md);

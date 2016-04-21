@@ -1,7 +1,7 @@
 (function(){
 	var app = angular.module("docsBuilder.web", ['ui.router', 'ui.bootstrap', 'ngAnimate','RecursionHelper','TreeWidget']);
 	
-	function DocsNavigationController($sce, $scope, $timeout){
+	function DocsNavigationController($sce, $scope){
 		var me = this;
 		me.searchValues = window.autoComplete;
 		me.menuData = window.docsData;
@@ -10,7 +10,7 @@
 		me.doctabs = [{
     		id: "home",
     		title: "Home",
-    		contentUrl: "home content"
+    		contentUrl: "mds/home.html"
     	}];
 		me.activeNavigationTabIndex = 0;
 
@@ -57,7 +57,7 @@
 		    	me.doctabs.push({
 		    		id: node.id,
 		    		title: node.name,
-		    		contentUrl: node.url
+		    		contentUrl: "mds/" + node.url + ".html"
 		    	});
 		    }
 			me.activeNavigationTabIndex = me.tabMaps[node.id];
@@ -74,7 +74,17 @@
 
 	}
 
-	app.controller("DocsNavigationController", ['$sce', '$scope', '$timeout', DocsNavigationController]);
+	app.controller("DocsNavigationController", ['$sce', '$scope', DocsNavigationController]);
+
+	function DocumentContentController($sce, $scope, $timeout){
+		var me = this;
+
+		me.initAutoComplete = function(data){
+			console.log(data);
+		};
+	}
+
+	app.controller("DocumentContentController", ['$sce', '$scope', '$timeout', DocumentContentController]);
 
 	app.config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {
 		$urlRouterProvider.otherwise('/');

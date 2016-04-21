@@ -7,7 +7,7 @@
   },
   "scripts": {
     "test": "jasmine-node ./test/specs --color --verbose",
-    "start": "node ./bin/docs.js ./test/SomeLibraryTest/**/**.js \"./other/folder with space in the name/**/**.js\" --dest ./docs/ --color"
+    "start": "node ./bin/docs.js ./test/SomeLibraryTest/**/**.js \"./other/folder with space in the name/**/**.js\" --dest C:/comscore/devs/docs/ --color"
   },
   "respository": {
     "type": "git",
