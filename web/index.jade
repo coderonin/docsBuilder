@@ -3,6 +3,7 @@ html(lang="en")
   head
     title= pageTitle
     link(href='css/bootstrap.min.css', type="text/css", rel="stylesheet")
+    link(href='css/font-awesome.min.css', type="text/css", rel="stylesheet")
     link(href='css/angular-tree-widget.min.css', type="text/css", rel="stylesheet")
     link(href='css/style.css', type="text/css", rel="stylesheet")
     script(type='text/javascript').
@@ -18,21 +19,21 @@ html(lang="en")
             span(class="icon-bar")
             span(class="icon-bar")
           a(class="navbar-brand", href="#") Brand
+        div(class="top-navigation")
+           ul(class="nav nav-tabs")
+              li(role="presentation", ng-click="dnav.selectTab(tab.id)", ng-class="{ active: $index == dnav.activeNavigationTabIndex }", ng-repeat="tab in dnav.doctabs")
+                a {{tab.title}}
+                  span(ng-hide="$index == 0",class="close fa fa-times-circle", ng-click="dnav.closeTab($event, tab.id)")
         div(class="navbar-form navbar-right")
             input(type="text", class="form-control", placeholder="Search", ng-model="selected", typeahead-template-url="searchTplItems.html", uib-typeahead="value as value.key for value in dnav.searchValues | filter:{ key:$viewValue} | limitTo:8")
     div(class='container-fluid')
       div(class="row")
-        div(id="sidebar-offcanvas", class="bordered", ng-class="{open: dnav.menuOpen}")
+        div(id="sidebar-offcanvas", ng-class="{open: dnav.menuOpen}")
+          i(class="replace-icon fa fa-code-fork", aria-hidden="true", ng-click="dnav.menuOpen = true")
           div(id="treepanel-container")
             tree(nodes='dnav.menuData', options='dnav.menuOptions')
-        div(id="body-wrapper", class="bordered", ng-class="{open: dnav.menuOpen}")
-          div(class='container-fluid bordered')
-            ul(class="nav nav-tabs")
-              li(role="presentation", ng-click="dnav.selectTab(tab.id)", ng-class="{ active: $index == dnav.activeNavigationTabIndex }", ng-repeat="tab in dnav.doctabs")
-                a {{tab.title}}
-                  span(ng-hide="$index == 0",class="", ng-click="dnav.closeTab($event, tab.id)") x
-            div(class="tab-content")
-              div(role="tabpanel", class="tab-pane", ng-class="{ active: $index == dnav.activeNavigationTabIndex }", ng-repeat="tab in dnav.doctabs", ng-include src="tab.contentUrl")
+        div(id="body-wrapper", class="tab-content bordered", ng-class="{open: dnav.menuOpen}")
+          div(role="tabpanel", class="tab-pane", ng-class="{ active: $index == dnav.activeNavigationTabIndex }", ng-repeat="tab in dnav.doctabs", ng-include src="tab.contentUrl")
                 
   script(type="text/ng-template", id="searchTplItems.html")
     div(class="item")

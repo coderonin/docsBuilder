@@ -8,21 +8,122 @@ body {
 	overflow-x: hidden; /* Prevent scroll on narrow devices */
 }
 
+body > .navbar{
+    min-height: 45px;
+    background: #293341;
+    border: 0px;
+    border-bottom: 2px solid #199070;
+}
+
+body > .navbar .navbar-form{
+    margin: 10px -15px 5px 5px;
+}
+
+body > .navbar .navbar-form input{
+    height: 28px;
+    padding: 3px 12px;
+    font-size: 12px;
+    width: 70px;
+    cursor: pointer;
+    background-color: transparent;
+    border-color: transparent;
+    -webkit-transition: width 0.3s ease;
+    -moz-transition: width 0.3s ease;
+    -o-transition: width 0.3s ease;
+    transition: width 0.3s ease;
+}
+
+body > .navbar .navbar-form input:focus{
+    width: 200px;
+    background-color: white;
+}
+
 .navbar-toggle{
 	display: inline-block !important;
-
+    padding: 6px;
 }
 .navbar-toggle,
 .navbar-brand{
 	float: none !important;
+    border: none;
+    margin-left: -8px;
+}
+
+.navbar-toggle:hover,
+.navbar-toggle:focus{
+    background-color: transparent !important;
 }
 
 #sidebar-offcanvas,
 #body-wrapper{
-	padding-top: 50px;
 	position: absolute;
-	top: 0;
-	height: 100%;
+	top: 44px;
+    bottom: 0;
+	height: auto;
+}
+
+.top-navigation{
+    display: inline-block;
+    position: absolute;
+    left: 260px;
+    right: 220px;
+    top: 4px;
+}
+
+.top-navigation > .nav{
+    height: 42px;
+    overflow: hidden;
+    border: none;
+    padding: 0px 18px;
+}
+
+.top-navigation .nav>li{
+    margin: 15px -17px 0;
+    border-top-right-radius: 25px 300px;
+    border-top-left-radius: 25px 300px;
+    padding: 0px 25px;
+    height: 320px;
+    position: relative;
+    box-shadow: 0 10px 20px rgba(0,0,0,.5);
+    max-width: 170px;
+    background: #49515D;
+    cursor: pointer;
+}
+
+.top-navigation .nav>li:hover{
+    background: #199070;
+}
+.top-navigation .nav>li:hover>a{
+    color: white;
+}
+
+.top-navigation .nav>li>a{
+    border: none !important;
+    padding: 6px 18px 6px 12px;
+    font-size: 12px;
+    background: transparent !important;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    color: #66B59F;
+}
+
+.top-navigation .nav>li.active:hover,
+.top-navigation .nav>li.active{
+    z-index: 2;
+    background: #fff;
+}
+
+.top-navigation .nav>li.active:hover> a,
+.top-navigation .nav>li.active> a{
+    color: black;
+    border: none;
+}
+
+.top-navigation .close{
+    cursor: pointer;
+    position: absolute;
+    right: 0px;
+    top: 8px;
 }
 
 #sidebar-offcanvas{
@@ -32,32 +133,75 @@ body {
     -o-transition: width 0.3s ease;
     transition: width 0.3s ease;
     overflow: hidden;
+    background: #252E3B;
+}
+
+.replace-icon{
+    color: #888;
+    font-size: 36px;
+    padding: 6px 14px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    display: block;
+}
+
+#sidebar-offcanvas #treepanel-container{
+    opacity: 0;
+}
+
+#sidebar-offcanvas .replace-icon{
+    opacity: 1;
+    z-index: 20;
+    cursor: pointer;
 }
 
 #sidebar-offcanvas.open{
 	width: 250px;
+    background: #252E3B;
+}
+
+#sidebar-offcanvas.open #treepanel-container{
+    opacity: 1;
+    background: #343A42;
+}
+
+#sidebar-offcanvas.open .replace-icon{
+    opacity: 0;
+    z-index: -1;
+}
+
+#treepanel-container,
+.replace-icon{
+    -webkit-transition: opacity 0.3s ease, background 0.3s ease;
+    -moz-transition: opacity 0.3s ease, background 0.3s ease;
+    -o-transition: opacity 0.3s ease, background 0.3s ease;
+    transition: opacity 0.3s ease, background 0.3s ease;
 }
 
 #body-wrapper{
-	width: 100%;
-	padding-right: 50px;
-	margin-left: 50px;
-	-webkit-transition: margin 0.3s ease;
-    -moz-transition: margin 0.3s ease;
-    -o-transition: margin 0.3s ease;
-    transition: margin 0.3s ease;
+    right: 0px;
+    left: 50px;
+    padding: 18px;
+	-webkit-transition: left 0.3s ease;
+    -moz-transition: left 0.3s ease;
+    -o-transition: left 0.3s ease;
+    transition: left 0.3s ease;
 }
 #body-wrapper.open{
-	margin-left: 250px;
+	left: 250px;
 }
 
 #treepanel-container{
 	position: absolute;
-    top: 50px;
+    top: 0px;
     bottom: 0px;
     width: 250px;
     overflow: auto;
     padding: 5px;
+    z-index: 4;
 }
 
 
@@ -69,18 +213,20 @@ body {
 
 .node-name{
 	display: inline-block;
+    color: #efe;
 }
 .node-name.selected:before{
 	content: "";
-    background: #BEEBFF;
     display: block;
+    background: #171C23;
     position: absolute;
     right: 0;
     left: 0;
-    height: 22px;
-    box-shadow: 0 0 1px #999 inset;
-    margin-top: -2px;
+    height: 24px;
     z-index: -1;
+    box-shadow: 0 0 2px #505761;
+    margin-top: -4px;
+    border-left: 6px solid #199070;
 }
 
 treenode .selected {
@@ -91,6 +237,11 @@ treenode .selected {
 
 .bordered{
 	border: 1px solid black;
+}
+
+tree > treenode > ul{
+    -webkit-padding-start: 0px;
+    padding-left: 0px;
 }
 
 /*
